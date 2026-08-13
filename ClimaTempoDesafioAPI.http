@@ -1,0 +1,6 @@
+@ClimaTempoDesafioAPI_HostAddress = http://localhost:5038
+
+GET {{ClimaTempoDesafioAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
