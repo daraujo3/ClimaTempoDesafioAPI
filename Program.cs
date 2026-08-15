@@ -1,6 +1,8 @@
+using ClimaTempoDesafioAPI.Middleware;
 using ClimaTempoDesafioAPI.Repositories;
 using ClimaTempoDesafioAPI.Repositories.Interfaces;
 using ClimaTempoDesafioAPI.Services;
+using ClimaTempoDesafioAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -10,7 +12,16 @@ using WeatherChallenge.Api.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Angular", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:4200")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 
 var jwtKey = builder.Configuration["Jwt:Key"];
 
@@ -59,6 +70,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 //Injecao de dependencias
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<ICidadeFavoritaRepository, CidadeFavoritaRepository>();
+builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+builder.Services.AddScoped<ICidadeFavoritaService, CidadeFavoritaService>();
 
 var app = builder.Build();
 
@@ -68,9 +81,13 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+app.UseHttpsRedirection(); 
+
+app.UseCors("Angular");
 
 app.UseAuthorization();
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.MapControllers();
 

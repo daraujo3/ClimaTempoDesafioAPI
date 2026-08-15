@@ -1,6 +1,7 @@
 ﻿using ClimaTempoDesafioAPI.Helpers;
 using ClimaTempoDesafioAPI.Models;
 using ClimaTempoDesafioAPI.Repositories.Interfaces;
+using ClimaTempoDesafioAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -9,55 +10,39 @@ using System.Text;
 
 namespace ClimaTempoDesafioAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v1/[controller]")]
     [ApiController]
     public class AutenticacaoController : ControllerBase
     {
         private readonly IConfiguration _configuration;
-        private readonly IUsuarioRepository _usuarioRepository;
+        private readonly IUsuarioService _usuarioService;
 
-        public AutenticacaoController(IConfiguration configuration, IUsuarioRepository usuarioRepository)
+        public AutenticacaoController(IConfiguration configuration, IUsuarioService usuarioService)
         {
             _configuration = configuration;
-            _usuarioRepository = usuarioRepository;
+            _usuarioService = usuarioService;
         }
 
         [HttpPost("registrar")]
-        public async Task<IActionResult> Register(UsuarioRegistrarDto dto)
+        public async Task<IActionResult> Register(LoginRequestDto dto)
         {
-            dto.Email = TratamentoDados.NormalizarEmail(dto.Email);
-
-            var usuario = await _usuarioRepository
-                .ObterPorUsernameAsync(TratamentoDados.NormalizarEmail(dto.Email));
-
-            if (usuario is not null)
-                throw new InvalidOperationException("E-mail já cadastrado.");
-
-            TratamentoDados.ValidarSenha(dto.Password);
-
-            var novoUsuario = new Usuario
-            {
-                Email = dto.Email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password)
-            };
-
-            var registeredUser = await _usuarioRepository.RegistrarUsuarioAsync(novoUsuario);
-            return CreatedAtAction(nameof(Register), new { email = registeredUser.Email }, registeredUser);
+            Usuario usuarioRegistrado = await _usuarioService.RegistrarUsuarioAsync(dto);
+            return Created();
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login(LoginRequest request)
+        public async Task<IActionResult> Login(LoginRequestDto request)
         {
             if (string.IsNullOrWhiteSpace(request.Email))
                 throw new ArgumentException("E-mail é obrigatório.");
 
-            var usuario = await _usuarioRepository
+            Usuario? usuario = await _usuarioService
                 .ObterPorUsernameAsync(TratamentoDados.NormalizarEmail(request.Email));
 
             if (usuario is null || !BCrypt.Net.BCrypt.Verify(request.Password, usuario.PasswordHash))
                 return Unauthorized();
 
-            var token = GenerateToken(usuario);
+            string token = GenerateToken(usuario);
 
             return Ok(new
             {
@@ -93,17 +78,5 @@ namespace ClimaTempoDesafioAPI.Controllers
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
-    }
-
-    public class LoginRequest
-    {
-        public string Email { get; set; } = "";
-        public string Password { get; set; } = "";
-    }
-
-    public class UsuarioRegistrarDto
-    {
-        public string Email { get; set; } = "";
-        public string Password { get; set; } = "";
     }
 }

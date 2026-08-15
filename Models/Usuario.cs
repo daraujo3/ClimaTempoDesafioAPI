@@ -12,4 +12,10 @@
 
         public ICollection<CidadeFavorita> CidadesFavoritas { get; set; } = new List<CidadeFavorita>();
     }
+
+    public class LoginRequestDto
+    {
+        public string Email { get; set; } = "";
+        public string Password { get; set; } = "";
+    }
 }

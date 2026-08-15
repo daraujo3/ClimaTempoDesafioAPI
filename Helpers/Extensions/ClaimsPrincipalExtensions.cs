@@ -1,6 +1,6 @@
 ﻿using System.Security.Claims;
 
-namespace ClimaTempoDesafioAPI.Extensions
+namespace ClimaTempoDesafioAPI.Helpers.Extensions
 {
     public static class ClaimsPrincipalExtensions
     {

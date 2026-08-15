@@ -1,3 +1,5 @@
+using ClimaTempoDesafioAPI.Models;
+using ClimaTempoDesafioAPI.Services.Interfaces;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
 
@@ -55,19 +57,45 @@ namespace ClimaTempoDesafioAPI.Services
         /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the JSON document with the weather forecast information.</returns>
         /// <exception cref="ArgumentException">Thrown when the query is null or whitespace.</exception>
-        public async Task<JsonDocument> GetForecastAsync(string query, int? days = null, CancellationToken cancellationToken = default)
+        public async Task<ReponseAPIWeather> GetForecastAsync(string query, int? days = null, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(query)) throw new ArgumentException("Termo de busca é obrigatório", nameof(query));
 
             var useDays = days ?? _options.DefaultForecastDays;
             if (useDays < 1) useDays = 1;
-            if (useDays > 10) useDays = 10; // Gratis no maximo 10 dias de previsão
+            if (useDays > 10) useDays = 10;
 
             var url = $"v1/forecast.json?key={Uri.EscapeDataString(_options.ApiKey)}&q={Uri.EscapeDataString(query)}&days={useDays}";
             var resp = await _httpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
             resp.EnsureSuccessStatusCode();
             var stream = await resp.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-            return await JsonDocument.ParseAsync(stream, default, cancellationToken).ConfigureAwait(false);
+            var jsonDocument = await JsonDocument.ParseAsync(stream, default, cancellationToken).ConfigureAwait(false);
+            return JsonSerializer.Deserialize<ReponseAPIWeather>(jsonDocument.RootElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        }
+
+        public async Task<CidadeFavoritaComTempoDto> GetForecastDtoAsync(string cidade)
+        {
+            var weather = await GetForecastAsync(cidade);
+            return new CidadeFavoritaComTempoDto()
+            {
+                Name = weather.location.name,
+                Region = weather.location.region,
+                Country = weather.location.country,
+                Temp_c = weather.current.temp_c,
+                Humidity = weather.current.humidity,
+                ForecastMaxtemp_c = weather.forecast.forecastday[0].day.maxtemp_c,
+                ForecastMintemp_c = weather.forecast.forecastday[0].day.mintemp_c,
+                Text = weather.current.condition.text,
+                Icon = weather.current.condition.icon,
+                previsao = weather.forecast.forecastday.Select(f => new PrevisaoFavoritoDto()
+                {
+                    Data = DateTime.TryParseExact(f.date, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var parsedDate) ? parsedDate : default,
+                    ForecastMaxtemp_c = f.day.maxtemp_c,
+                    ForecastMintemp_c = f.day.mintemp_c,
+                    Text = f.day.condition.text,
+                    Icon = f.day.condition.icon
+                }).ToList()
+            };
         }
     }
 }

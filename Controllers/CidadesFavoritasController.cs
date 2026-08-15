@@ -1,6 +1,7 @@
-﻿using ClimaTempoDesafioAPI.Extensions;
+﻿using ClimaTempoDesafioAPI.Helpers.Extensions;
 using ClimaTempoDesafioAPI.Models;
 using ClimaTempoDesafioAPI.Repositories.Interfaces;
+using ClimaTempoDesafioAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -12,47 +13,38 @@ namespace ClimaTempoDesafioAPI.Controllers
     [Authorize]
     public class CidadesFavoritasController : ControllerBase
     {
-        private readonly ICidadeFavoritaRepository _cidadeFavoritaRepository;
+        private readonly ICidadeFavoritaService _cidadeFavoritaService;
 
-        public CidadesFavoritasController(ICidadeFavoritaRepository cidadeFavoritaRepository)
+        public CidadesFavoritasController(ICidadeFavoritaService cidadeFavoritaService)
         {
-            _cidadeFavoritaRepository = cidadeFavoritaRepository;
+            _cidadeFavoritaService = cidadeFavoritaService;
         }
 
         [HttpPost("adicionar")]
-        public async Task<IActionResult> AdicionarCidadeFavorita([FromBody] CidadeFavoritaDto cidadeFavorita)
+        public async Task<IActionResult> AdicionarCidadeFavorita([FromBody] NovaCidadeFavoritaDto cidadeFavorita)
         {
-            await _cidadeFavoritaRepository.AdicionarCidadeFavorita(new CidadeFavorita()
-            {
-                Name = cidadeFavorita.Name,
-                Posicao = cidadeFavorita.Posicao,
-                Cor = cidadeFavorita.Cor,
-                Destaque = cidadeFavorita.Destaque,
-                UserId = User.GetUsuarioId()
-            });
+            await _cidadeFavoritaService.AdicionarCidadeFavorita(User.GetUsuarioId(), cidadeFavorita);
             return Created();
         }
 
         [HttpGet("listar")]
         public async Task<IActionResult> ListarCidadesFavoritas()
         {
-            var usuarioId = User.GetUsuarioId();
-
-            var cidades = await _cidadeFavoritaRepository.ListarCidadesFavoritas(usuarioId);
+            var cidades = await _cidadeFavoritaService.ListarCidadesFavoritas(User.GetUsuarioId());
             return Ok(cidades);
         }
 
         [HttpDelete("remover")]
         public async Task<IActionResult> RemoverCidadeFavorita([FromQuery] int id)
         {
-            await _cidadeFavoritaRepository.RemoverCidadeFavorita(id);
+            await _cidadeFavoritaService.RemoverCidadeFavorita(id, User.GetUsuarioId());
             return Ok();
         }
 
         [HttpPatch("atualizar")]
-        public async Task<IActionResult> AtualizarCidadeFavorita([FromBody] CidadeFavorita cidadeFavorita)
+        public async Task<IActionResult> AtualizarCidadeFavorita([FromBody] ICollection<CidadeFavoritaDto> cidadesFavoritas)
         {
-            await _cidadeFavoritaRepository.AtualizarCidadeFavorita(cidadeFavorita);
+            await _cidadeFavoritaService.AtualizarCidadeFavorita(cidadesFavoritas);
             return Ok();
         }
     }
