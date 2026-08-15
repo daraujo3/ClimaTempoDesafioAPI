@@ -41,10 +41,10 @@ namespace ClimaTempoDesafioAPI.Controllers
             return Ok();
         }
 
-        [HttpPatch("atualizar")]
+        [HttpPut("atualizar")]
         public async Task<IActionResult> AtualizarCidadeFavorita([FromBody] ICollection<CidadeFavoritaDto> cidadesFavoritas)
         {
-            await _cidadeFavoritaService.AtualizarCidadeFavorita(cidadesFavoritas);
+            await _cidadeFavoritaService.AtualizarCidadeFavorita(User.GetUsuarioId(), cidadesFavoritas);
             return Ok();
         }
     }

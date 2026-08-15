@@ -30,6 +30,25 @@ namespace ClimaTempoDesafioAPI.Repositories
             }
         }
 
+        public async Task AtualizarCidadesFavorita(IEnumerable<CidadeFavorita> cidadesFavoritas)
+        {
+            if (cidadesFavoritas == null) throw new ArgumentNullException(nameof(cidadesFavoritas));
+
+            var dbSet = _context.Set<CidadeFavorita>();
+
+            foreach (var cidade in cidadesFavoritas)
+            {
+                if (cidade == null) continue;
+
+                if (cidade.Id == 0)
+                    await dbSet.AddAsync(cidade);
+                else
+                    _context.Entry(cidade).State = EntityState.Modified;
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
         public async Task<CidadeFavorita?> BuscarFavorito(int userId, NovaCidadeFavoritaDto cidadeFavorita)
         {
             return await _context.CidadeFavorita.FirstOrDefaultAsync(c => 
@@ -47,7 +66,7 @@ namespace ClimaTempoDesafioAPI.Repositories
 
         public async Task<IEnumerable<CidadeFavorita>> ListarCidadesFavoritas(int usuarioId)
         {
-            return await _context.CidadeFavorita.Where(c => c.UserId == usuarioId).ToListAsync();
+            return await _context.CidadeFavorita.Where(c => c.UserId == usuarioId).OrderBy(a => a.Posicao).ToListAsync();
         }
 
         public async Task RemoverCidadeFavorita(int id, int userId)

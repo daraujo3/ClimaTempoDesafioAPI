@@ -7,8 +7,7 @@
         public string Region { get; set; } = string.Empty;
         public string Country { get; set; } = string.Empty;
         public int Posicao { get; set; }
-        public string Cor { get; set; } = string.Empty;
-        public string Tamanho { get; set; } = string.Empty;
+        public bool isExpanded { get; set; } = false;
 
         public string Localizacao => $"{Name}, {Region}, {Country}";
 
@@ -30,8 +29,7 @@
         public int Id { get; set; }
         public int UserId { get; set; }
         public int Posicao { get; set; }
-        public string Cor { get; set; } = string.Empty;
-        public string Tamanho { get; set; } = string.Empty;
+        public bool isExpanded { get; set; } = false;
     }
 
     public class FavoritosDto
@@ -46,8 +44,7 @@
         public string Region { get; set; } = string.Empty;
         public string Country { get; set; } = string.Empty;
         public int Posicao { get; set; }
-        public string Cor { get; set; } = string.Empty;
-        public string Tamanho { get; set; } = string.Empty;
+        public bool isExpanded { get; set; } = false;
 
         public float Temp_c { get; set; }
         public float Humidity { get; set; }

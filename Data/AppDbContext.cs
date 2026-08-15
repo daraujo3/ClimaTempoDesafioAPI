@@ -26,10 +26,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.Property(x => x.Name).HasMaxLength(150).IsRequired();
             entity.Property(x => x.Region).HasMaxLength(200).IsRequired();
             entity.Property(x => x.Country).HasMaxLength(200).IsRequired();
-            entity.Property(x => x.Cor).HasMaxLength(50);
-            entity.Property(x => x.Tamanho).HasMaxLength(50);
             entity.Property(x => x.Posicao);
-            
+            entity.Property(x => x.isExpanded);
+
             entity.HasOne(x => x.Usuario)
                   .WithMany(x => x.CidadesFavoritas)
                   .HasForeignKey(x => x.UserId)

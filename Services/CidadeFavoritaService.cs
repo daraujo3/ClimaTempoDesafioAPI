@@ -34,15 +34,30 @@ namespace ClimaTempoDesafioAPI.Services
                 Name = cidadeFavorita.Name,
                 Region = cidadeFavorita.Region,
                 Country = cidadeFavorita.Country,
-                Cor = "",
-                Tamanho = "",
+                isExpanded = false,
                 Posicao = 0
             });
         }
 
-        public Task AtualizarCidadeFavorita(ICollection<CidadeFavoritaDto> cidadesFavoritas)
+        public async Task AtualizarCidadeFavorita(int userId, ICollection<CidadeFavoritaDto> cidadesFavoritas)
         {
-            throw new NotImplementedException();
+            if (cidadesFavoritas == null || cidadesFavoritas.Count == 0)
+                return;
+
+            var _cidadesFavoritas = await _cidadeFavoritaRepository.ListarCidadesFavoritas(userId);
+
+            foreach (var cidade in cidadesFavoritas)
+            {
+                var cidadeExistente = _cidadesFavoritas.FirstOrDefault(c => c.Id == cidade.Id);
+
+                if (cidadeExistente == null)
+                    continue;
+
+                cidadeExistente.isExpanded = cidade.isExpanded;
+                cidadeExistente.Posicao = cidade.Posicao;
+            }
+
+            await _cidadeFavoritaRepository.AtualizarCidadesFavorita(_cidadesFavoritas);
         }
 
         public async Task<FavoritosDto> ListarCidadesFavoritas(int userId)
@@ -59,8 +74,7 @@ namespace ClimaTempoDesafioAPI.Services
                     Region = cidade.Region,
                     Country = cidade.Country,
                     Posicao = cidade.Posicao,
-                    Cor = cidade.Cor,
-                    Tamanho = cidade.Tamanho,
+                    isExpanded = cidade.isExpanded,
                     Temp_c = weather.current.temp_c,
                     Humidity = weather.current.humidity,
                     ForecastMaxtemp_c = weather.forecast.forecastday[0].day.maxtemp_c,

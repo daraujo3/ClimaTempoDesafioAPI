@@ -1,5 +1,7 @@
+using ClimaTempoDesafioAPI.Helpers.Exceptions;
 using ClimaTempoDesafioAPI.Models;
 using ClimaTempoDesafioAPI.Services.Interfaces;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
 
@@ -59,18 +61,25 @@ namespace ClimaTempoDesafioAPI.Services
         /// <exception cref="ArgumentException">Thrown when the query is null or whitespace.</exception>
         public async Task<ReponseAPIWeather> GetForecastAsync(string query, int? days = null, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(query)) throw new ArgumentException("Termo de busca é obrigatório", nameof(query));
+            try
+            {
+                if (string.IsNullOrWhiteSpace(query)) throw new ArgumentException("Termo de busca é obrigatório", nameof(query));
 
-            var useDays = days ?? _options.DefaultForecastDays;
-            if (useDays < 1) useDays = 1;
-            if (useDays > 10) useDays = 10;
+                var useDays = days ?? _options.DefaultForecastDays;
+                if (useDays < 1) useDays = 1;
+                if (useDays > 10) useDays = 10;
 
-            var url = $"v1/forecast.json?key={Uri.EscapeDataString(_options.ApiKey)}&q={Uri.EscapeDataString(query)}&days={useDays}";
-            var resp = await _httpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
-            resp.EnsureSuccessStatusCode();
-            var stream = await resp.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-            var jsonDocument = await JsonDocument.ParseAsync(stream, default, cancellationToken).ConfigureAwait(false);
-            return JsonSerializer.Deserialize<ReponseAPIWeather>(jsonDocument.RootElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                var url = $"v1/forecast.json?key={Uri.EscapeDataString(_options.ApiKey)}&q={Uri.EscapeDataString(query)}&days={useDays}";
+                var resp = await _httpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
+                resp.EnsureSuccessStatusCode();
+                var stream = await resp.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+                var jsonDocument = await JsonDocument.ParseAsync(stream, default, cancellationToken).ConfigureAwait(false);
+                return JsonSerializer.Deserialize<ReponseAPIWeather>(jsonDocument.RootElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+            catch (Exception)
+            {
+                throw new BusinessException("Não encontrado dados");
+            }
         }
 
         public async Task<CidadeFavoritaComTempoDto> GetForecastDtoAsync(string cidade)

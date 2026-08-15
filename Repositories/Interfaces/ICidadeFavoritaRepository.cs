@@ -24,5 +24,6 @@ namespace ClimaTempoDesafioAPI.Repositories.Interfaces
         /// <returns></returns>
         Task<CidadeFavorita?> BuscarFavorito(int userId, NovaCidadeFavoritaDto cidadeFavorita);
         Task<bool> FavoritoPertenceAoUsuarioAsync(int id, int userId);
+        Task AtualizarCidadesFavorita(IEnumerable<CidadeFavorita> cidadesFavoritas);
     }
 }
